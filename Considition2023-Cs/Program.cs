@@ -43,17 +43,19 @@ const string apikey = "24857943-542a-4e7d-bbe4-a7a1115b0527";
 //    return;
 //}
 
-var mapName = MapNames.Goteborg;
+//var mapName = MapNames.Goteborg;
 
 HttpClient client = new();
 Api api = new(client);
-MapData mapData = await api.GetMapDataAsync(mapName, apikey);
 GeneralData generalData = await api.GetGeneralDataAsync();
+foreach (var mapName in generalData.TrainingMapNames)
+{
+    MapData mapData = await api.GetMapDataAsync(mapName, apikey);
 
-double scoreValue = 0d;
+    double scoreValue = 0d;
 //while (true)
 //{
-    SubmitSolution solution = new() 
+    SubmitSolution solution = new()
     {
         Locations = new()
     };
@@ -70,9 +72,9 @@ double scoreValue = 0d;
 
             //if (_3100 + _9100 == 0) continue;
 
-            solution.Locations[location.LocationName] = new PlacedLocations() 
-            { 
-                Freestyle3100Count = i++ % 3 == 0 ? 1 : 0, //_3100,
+            solution.Locations[location.LocationName] = new PlacedLocations()
+            {
+                Freestyle3100Count = i++ % 4 == 0 ? 1 : 0, //_3100,
                 Freestyle9100Count = 1, //_9100,
             };
         }
@@ -82,11 +84,13 @@ double scoreValue = 0d;
     if (scoreValue < score.GameScore.Total)
     {
         scoreValue = score.GameScore.Total;
-        Console.WriteLine($"GameScore: {score.GameScore.Total}");
+        Console.WriteLine($"Map: {mapName}, GameScore: {score.GameScore.Total}");
     }
-//}
-GameData prodScore = await api.SumbitAsync(mapName, solution, apikey);
-Console.WriteLine($"GameId: {prodScore.Id}");
+
+    //}
+    GameData prodScore = await api.SumbitAsync(mapName, solution, apikey);
+    Console.WriteLine($"GameId: {prodScore.Id}");
+}
 
 int a = 1;
 
