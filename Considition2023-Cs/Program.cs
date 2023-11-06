@@ -64,6 +64,7 @@ foreach (var mapName in generalData.TrainingMapNames)
     {
         StoreLocation location = locationKeyPair.Value;
         //string name = locationKeyPair.Key;
+        //if (location.Footfall == 0d) continue;
         var salesVolume = location.SalesVolume;
         if (salesVolume > 0)
         {
@@ -71,14 +72,25 @@ foreach (var mapName in generalData.TrainingMapNames)
             //var _3100 = Random.Shared.Next(0, 2) * Random.Shared.Next(0, 6);
 
             //if (_3100 + _9100 == 0) continue;
+            //var _3100 = i++ % 5 == 0 ? 1 : 0;
+            //var _9100 = salesVolume > 0 ? 1 : 0;
+            var _3100 = salesVolume < 75 ?  1 : 0;
+            var _9100 = salesVolume > 25 ? 1 : 0;
+
+            if (_3100 + _9100 == 0) continue;
 
             solution.Locations[location.LocationName] = new PlacedLocations()
             {
-                Freestyle3100Count = i++ % 4 == 0 ? 1 : 0, //_3100,
-                Freestyle9100Count = 1, //_9100,
+                Freestyle3100Count = _3100, //_3100,
+                Freestyle9100Count = _9100, //i % 3 == 0 ? 2 : 1, //_9100,
+                Footfall = location.Footfall,
+                SalesVolume = location.SalesVolume
             };
         }
     }
+
+    //var json = System.Text.Json.JsonSerializer.Serialize(solution);
+    //File.WriteAllText($@"c:\temp\considition\{mapName}.json", json);
 
     GameData score = new Scoring().CalculateScore(string.Empty, solution, mapData, generalData);
     if (scoreValue < score.GameScore.Total)
@@ -88,8 +100,8 @@ foreach (var mapName in generalData.TrainingMapNames)
     }
 
     //}
-    GameData prodScore = await api.SumbitAsync(mapName, solution, apikey);
-    Console.WriteLine($"GameId: {prodScore.Id}");
+    //GameData prodScore = await api.SumbitAsync(mapName, solution, apikey);
+    //Console.WriteLine($"GameId: {prodScore.Id}");
 }
 
 int a = 1;

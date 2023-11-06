@@ -20,6 +20,9 @@ namespace Considition2023_Cs
 
         [Range(0, 5)]
         public required int Freestyle3100Count { get; set; } = -1;
+        public double Footfall { get; set; }
+        public double SalesVolume { get; set; }
+
     }
 
 
