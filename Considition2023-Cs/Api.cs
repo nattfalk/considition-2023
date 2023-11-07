@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Net;
+using Newtonsoft.Json;
 using System.Text.Json;
 
 namespace Considition2023_Cs;
@@ -43,13 +44,29 @@ internal class Api
 
     public async Task<GameData> SumbitAsync(string mapName, SubmitSolution solution, string apiKey)
     {
-        HttpRequestMessage request = new();
-        request.Method = HttpMethod.Post;
-        request.RequestUri = new Uri($"/api/Game/submitSolution?mapName={Uri.EscapeDataString(mapName)}", UriKind.Relative);
-        request.Headers.Add("x-api-key", apiKey);
-        request.Content = new StringContent(JsonConvert.SerializeObject(solution), System.Text.Encoding.UTF8, "application/json");
-        HttpResponseMessage response = _httpClient.Send(request);
+        HttpResponseMessage response;
+        while(true)
+        {
+            HttpRequestMessage request = new()
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri($"/api/Game/submitSolution?mapName={Uri.EscapeDataString(mapName)}", UriKind.Relative),
+                Content = new StringContent(JsonConvert.SerializeObject(solution), System.Text.Encoding.UTF8, "application/json")
+            };
+            request.Headers.Add("x-api-key", apiKey);
+            response = _httpClient.Send(request);
+            if (response.StatusCode != HttpStatusCode.TooManyRequests)
+                break;
+            Thread.Sleep(1000);
+        }
         string responseText = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<GameData>(responseText);
+        try
+        {
+            return JsonConvert.DeserializeObject<GameData>(responseText);
+        }
+        catch (Exception ex)
+        {
+            throw ex;
+        }
     }
 }   
