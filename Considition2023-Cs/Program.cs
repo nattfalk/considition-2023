@@ -1,4 +1,5 @@
-﻿using Considition2023_Cs;
+﻿using System.Runtime.InteropServices;
+using Considition2023_Cs;
 using System.Text.Json.Serialization;
 
 const string apikey = "24857943-542a-4e7d-bbe4-a7a1115b0527";
@@ -162,30 +163,54 @@ foreach (var mapName in generalData.TrainingMapNames)
         Console.WriteLine($"Map: {mapName}, GameScore: {score.GameScore.Total}");
     }
 
-    foreach (var location in solution.Locations)
-    {
-        var oldList = solution.Locations;
-        var oldValue = location.Value.Freestyle3100Count;
-        location.Value.Freestyle3100Count = 0;
+    solution.Locations = solution.Locations
+        .Where(x =>
+            x.Key != "location73"
+            && x.Key != "location139"
+            && x.Key ! != "location160")
+        .ToDictionary(x => x.Key, y => y.Value);
+    score = new Scoring().CalculateScore(string.Empty, solution, mapData, generalData);
+    Console.WriteLine($"Recalculated score - Map: {mapName}, GameScore: {score.GameScore.Total}");
 
-        if (location.Value.Freestyle3100Count + location.Value.Freestyle9100Count == 0)
-        {
-            solution.Locations = solution.Locations.Where(x => x.Key != location.Key).ToDictionary(x => x.Key, y => y.Value);
-        }
 
-        score = new Scoring().CalculateScore(string.Empty, solution, mapData, generalData);
-        if (scoreValue < score.GameScore.Total)
-        {
-            scoreValue = score.GameScore.Total;
-            Console.WriteLine($"Map: {mapName}, Location: {location.Key}-{location.Value.Freestyle3100Count}-{location.Value.Freestyle9100Count}, GameScore: {score.GameScore.Total}");
-            //GameData prodScore = await api.SumbitAsync(mapName, solution, apikey);
-            //Console.WriteLine($"GameId: {prodScore.Id}");
-        }
+    //foreach (var locationScore in score.Locations)
+    //{
+    //    if (locationScore.Value.Earnings <= 0d && locationScore.Value.Freestyle3100Count > 0)
+    //    {
+    //        Console.WriteLine($"{locationScore.Key}, {locationScore.Value.Earnings}");
+    //        solution.Locations = solution.Locations
+    //            .Where(x => x.Key != locationScore.Key)
+    //            .ToDictionary(x => x.Key, y => y.Value);
+    //        break;
+    //    }
+    //}
+    //score = new Scoring().CalculateScore(string.Empty, solution, mapData, generalData);
+    //Console.WriteLine($"Recalculated score - Map: {mapName}, GameScore: {score.GameScore.Total}");
 
-        solution.Locations = oldList;
-        location.Value.Freestyle3100Count = oldValue;
+    //foreach (var location in solution.Locations)
+    //{
+    //    var oldList = solution.Locations;
+    //    var oldValue = location.Value.Freestyle3100Count;
+    //    location.Value.Freestyle3100Count = 0;
 
-    }
+    //    if (location.Value.Freestyle3100Count + location.Value.Freestyle9100Count == 0)
+    //    {
+    //        solution.Locations = solution.Locations.Where(x => x.Key != location.Key).ToDictionary(x => x.Key, y => y.Value);
+    //    }
+
+    //    score = new Scoring().CalculateScore(string.Empty, solution, mapData, generalData);
+    //    if (scoreValue < score.GameScore.Total)
+    //    {
+    //        scoreValue = score.GameScore.Total;
+    //        Console.WriteLine($"Map: {mapName}, Location: {location.Key}-{location.Value.Freestyle3100Count}-{location.Value.Freestyle9100Count}, GameScore: {score.GameScore.Total}");
+    //        //GameData prodScore = await api.SumbitAsync(mapName, solution, apikey);
+    //        //Console.WriteLine($"GameId: {prodScore.Id}");
+    //    }
+
+    //    solution.Locations = oldList;
+    //    location.Value.Freestyle3100Count = oldValue;
+
+    //}
 
     //}
     //GameData prodScore = await api.SumbitAsync(mapName, solution, apikey);
