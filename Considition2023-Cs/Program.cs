@@ -1,4 +1,5 @@
-﻿using Considition2023_Cs;
+﻿using System.ComponentModel;
+using Considition2023_Cs;
 
 const string apikey = "24857943-542a-4e7d-bbe4-a7a1115b0527";
 
@@ -33,17 +34,32 @@ foreach (var mapName in generalData.TrainingMapNames)
     Console.WriteLine($"Map: {mapName}, Initial GameScore: {score.GameScore!.Total}");
     var scoreValue = score.GameScore!.Total;
 
-    Console.WriteLine("** Optimize 1");
-    Optimize(locations, ref scoreValue, mapData, (loc) =>
+    var optimizationFunctions = new List<Action<PlacedLocations>>
     {
-        loc.Freestyle9100Count = 0;
-        loc.Freestyle3100Count += 1;
-    });
-    Console.WriteLine("** Optimize 2");
-    Optimize(locations, ref scoreValue, mapData, (loc) =>
-    {
-        loc.Freestyle3100Count = 0;
-    });
+        loc =>
+        {
+            loc.Freestyle9100Count = 0;
+            loc.Freestyle3100Count += 1;
+        },
+        loc =>
+        {
+            loc.Freestyle3100Count = 0;
+        }
+    };
+
+    var optimizeRunCount = 1;
+    while (true)
+    {   
+        var previousScore = scoreValue;
+
+        foreach (var optimizationFunction in optimizationFunctions)
+        {
+            Console.WriteLine($"** Optimize {optimizeRunCount++}");
+            Optimize(locations, ref scoreValue, mapData, optimizationFunction);
+        }
+
+        if (Math.Abs(previousScore - scoreValue) < 0.0000001d) break;
+    }
 
     File.WriteAllText($"{mapName}.json", System.Text.Json.JsonSerializer.Serialize(locations));
 
@@ -81,16 +97,14 @@ void Optimize(
         };
 
         var score = new Scoring().CalculateScore(string.Empty, solution, mapData, generalData);
-        if (scoreValue < score.GameScore!.Total)
+        if (scoreValue >= score.GameScore!.Total)
         {
-            scoreValue = score.GameScore.Total;
-            Console.WriteLine($" - GameScore: {score.GameScore.Total}");
-
-            old9100 = location.Value.Freestyle9100Count;
-            old3100 = location.Value.Freestyle3100Count;
+            location.Value.Freestyle3100Count = old3100;
+            location.Value.Freestyle9100Count = old9100;
+            continue;
         }
 
-        location.Value.Freestyle3100Count = old3100;
-        location.Value.Freestyle9100Count = old9100;
+        scoreValue = score.GameScore.Total;
+        Console.WriteLine($" - GameScore: {score.GameScore.Total}");
     }
 }
