@@ -9,7 +9,7 @@ var generalData = await api.GetGeneralDataAsync();
 
 var _3100Capacity = generalData.Freestyle3100Data.RefillCapacityPerWeek;
 
-foreach (var mapName in generalData.TrainingMapNames)
+foreach (var mapName in generalData.TrainingMapNames.Where(m => !m.ToLower().EndsWith("sandbox")))
 {
     var mapData = await api.GetMapDataAsync(mapName, apikey);
 
@@ -38,13 +38,30 @@ foreach (var mapName in generalData.TrainingMapNames)
     {
         loc =>
         {
-            loc.Freestyle9100Count = 0;
-            loc.Freestyle3100Count += 1;
+            loc.Freestyle9100Count = Math.Max(loc.Freestyle9100Count - 1, 0);
+            loc.Freestyle3100Count = Math.Min(loc.Freestyle3100Count + 1, 2);
         },
         loc =>
         {
-            loc.Freestyle3100Count = 0;
-        }
+            loc.Freestyle3100Count = Math.Max(loc.Freestyle3100Count - 1, 0);
+        },
+        loc =>
+        {
+            loc.Freestyle3100Count = Math.Min(loc.Freestyle3100Count + 1, 2);
+        },
+        loc =>
+        {
+            loc.Freestyle3100Count = Math.Max(loc.Freestyle3100Count - 1, 0);
+            loc.Freestyle9100Count = Math.Min(loc.Freestyle9100Count + 1, 2);
+        },
+        loc =>
+        {
+            loc.Freestyle9100Count = Math.Max(loc.Freestyle9100Count - 1, 0);
+        },
+        loc =>
+        {
+            loc.Freestyle9100Count = Math.Min(loc.Freestyle9100Count + 1, 2);
+        },
     };
 
     var optimizeRunCount = 1;
