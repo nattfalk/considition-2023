@@ -80,6 +80,7 @@ var optimizers = new HashSet<IOptimizer>()
     //new Optimizer2(generalData, mapData),       // Linköping 699.57
     //new Optimizer3_sorted_dec(generalData, mapData),    // Göteborg, 6147.40
     new Optimizer3_sorted(generalData, mapData),    // Uppsala, 2410.65, Västerås, 1498.38
+    
     //new Optimizer1(generalData, mapData),
     //new Optimizer3_2(generalData, mapData),
     //new Optimizer3(generalData, mapData),
