@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Considition2023_Cs.Optimizers;
+﻿namespace Considition2023_Cs.Optimizers;
 
 internal static class OptimizerFunctions
 {
@@ -13,7 +7,7 @@ internal static class OptimizerFunctions
         MapData mapData,
         Dictionary<string, PlacedLocations> locations,
         double currentScoreValue,
-        Action<PlacedLocations> processLocation)
+        OptimizerAction processLocation)
     {
         var scoreValue = currentScoreValue;
         foreach (var location in locations)
@@ -21,7 +15,7 @@ internal static class OptimizerFunctions
             var old3100 = location.Value.Freestyle3100Count;
             var old9100 = location.Value.Freestyle9100Count;
 
-            processLocation(location.Value);
+            processLocation.Optimizer(location.Value);
 
             var solution = new SubmitSolution
             {
@@ -39,6 +33,7 @@ internal static class OptimizerFunctions
             else
             {
                 scoreValue = score.GameScore.Total;
+                processLocation.UsageCount++;
             }
         }
 
@@ -50,7 +45,7 @@ internal static class OptimizerFunctions
         MapData mapData,
         Dictionary<string, PlacedLocations> locations,
         double currentScoreValue,
-        List<Action<PlacedLocations>> processLocationFunctions)
+        List<OptimizerAction> processLocationFunctions)
     {
         var scoreValue = currentScoreValue;
         foreach (var location in locations)
@@ -60,7 +55,7 @@ internal static class OptimizerFunctions
                 var old3100 = location.Value.Freestyle3100Count;
                 var old9100 = location.Value.Freestyle9100Count;
 
-                processFunc(location.Value);
+                processFunc.Optimizer(location.Value);
 
                 var solution = new SubmitSolution
                 {
@@ -78,6 +73,7 @@ internal static class OptimizerFunctions
                 else
                 {
                     scoreValue = score.GameScore.Total;
+                    processFunc.UsageCount++;
                 }
             }
         }

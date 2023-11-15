@@ -1,7 +1,6 @@
-﻿using System.ComponentModel;
-using System.Security.Cryptography;
-using Considition2023_Cs;
+﻿using Considition2023_Cs;
 using Considition2023_Cs.Optimizers;
+using Newtonsoft.Json;
 
 const bool isFinals = false;
 
@@ -73,21 +72,29 @@ solution.Locations = InitializeLocations(mapData.locations, locations)
     .Where(x => x.Value.Freestyle3100Count > 0 || x.Value.Freestyle9100Count > 0)
     .ToDictionary(x => x.Key, y => y.Value);
 
-var score = new Scoring().CalculateScore(mapName, solution, mapData, generalData);
+GameData score = null;
+if (solution.Locations.Count > 0)
+    score = new Scoring().CalculateScore(mapName, solution, mapData, generalData);
 Console.SetCursorPosition(0, 7);
-Console.WriteLine($"Map: {mapName}, Initial GameScore: {score.GameScore!.Total}");
-var scoreValue = score.GameScore!.Total;
+Console.WriteLine($"Map: {mapName}, Initial GameScore: {score?.GameScore?.Total ?? 0d}");
+var scoreValue = score?.GameScore?.Total ?? 0d;
 
 var optimizeRunCount = 1;
 var optimizers = new HashSet<IOptimizer>()
 {
+    //new Optimizer10(generalData, mapData, OptimizerSort.None),
+    //new Optimizer10(generalData, mapData, OptimizerSort.Ascending),
+    //new Optimizer10(generalData, mapData, OptimizerSort.Descending),
+    //new Optimizer11(generalData, mapData, OptimizerSort.None),
+    //new Optimizer11(generalData, mapData, OptimizerSort.Ascending),
+    new Optimizer11(generalData, mapData, OptimizerSort.Descending),
     //new Optimizer2(generalData, mapData),       // Linköping 699.57
-    new Optimizer3_sorted_dec(generalData, mapData),    // Göteborg, 6147.40
-    //new Optimizer3_sorted(generalData, mapData),    // Uppsala, 2410.65, Västerås, 1498.38
-    
+    //new Optimizer3_sorted_dec(generalData, mapData),    // Göteborg, 6147.40, G-Sandbox, 2342.08
+    //new Optimizer3_sorted(generalData, mapData),    // Uppsala, 2412.25, Västerås, 1498.38
     //new Optimizer1(generalData, mapData),
-    //new Optimizer3_2(generalData, mapData),
     //new Optimizer3(generalData, mapData),
+    
+    //new Optimizer3_2(generalData, mapData),
     //new Optimizer4(generalData, mapData),
     //new Optimizer5(generalData, mapData),
     //new Optimizer6(generalData, mapData),
@@ -108,6 +115,15 @@ while (true)
             previousScore = newScore;
             currentBestLocations = CopyLocations(tempLocations);
         }
+        //var tempLocations = InitializeLocations(mapData.locations, locations);
+        //var newScore = optimizer.Optimize(tempLocations, scoreValue, ref optimizeRunCount);
+        //if (newScore > previousScore)
+        //{
+        //    previousScore = newScore;
+        //    scoreValue = newScore;
+        //    currentBestLocations = CopyLocations(tempLocations);
+        //    locations = CopyLocations(tempLocations);
+        //}
 
         Console.SetCursorPosition(0, 8);
         Console.WriteLine($"- Optimize step: {optimizeRunCount,3:0}, New score: {scoreValue,11:#.00}");
@@ -130,6 +146,13 @@ var prodScore = await api.SumbitAsync(mapName, solution, apikey);
 Console.WriteLine($"GameId: {prodScore.Id}");
 Console.WriteLine($"Submitted GameScore: {prodScore.GameScore!.Total}");
 Console.WriteLine();
+
+File.WriteAllText(
+    "Optimizer2_usage.json", 
+    JsonConvert.SerializeObject(
+        ((OptimizerBase)optimizers.First())._optimizationFunctions, 
+        Formatting.Indented));
+
 return;
 
 Dictionary<string, PlacedLocations> CopyLocations(Dictionary<string, PlacedLocations> inputLocations)
@@ -175,7 +198,9 @@ Dictionary<string, PlacedLocations> InitializeLocations(Dictionary<string, Store
                 Freestyle9100Count = location.Value.Freestyle9100Count,
                 Latitude = location.Value.Latitude,
                 Longitude = location.Value.Longitude,
-                LocationType = location.Value.LocationType
+                LocationType = location.Value.LocationType,
+                Footfall = location.Value.Footfall,
+                Spread = location.Value.Spread
             };
         }
     }
@@ -192,84 +217,218 @@ Dictionary<string, PlacedLocations> CreateSandboxMap()
     //const int maxGasStation = 8;
     //const int maxKiosk = 3;
 
-    var hotspots = mapData.Hotspots.OrderByDescending(h => h.Footfall * h.Spread).ToList();
+    var hotspots = mapData.Hotspots
+        .Where(h => 
+            h.Longitude >= mapData.Border.LongitudeMin && h.Longitude <= mapData.Border.LongitudeMax 
+            && h.Latitude >= mapData.Border.LatitudeMin && h.Latitude <= mapData.Border.LatitudeMax)
+        .OrderBy(h => h.Footfall * h.Spread)
+        .Where((x, i) => i % 2 > 0)
+        .ToList();
 
     var locCount = 1;
-    for (var i = 0; i < 5; i++)
+    for (var i = 0; i < (5 + 20 + 20 + 8 + 3); i++)
     {
-        locations.Add($"location{locCount++}", new PlacedLocations
+        var locationType = GetLocationType(i + 1);
+        locations.Add($"location{i+1}", new PlacedLocations
         {
             Longitude = hotspots[i].Longitude,
             Latitude = hotspots[i].Latitude,
-            LocationType = "Grocery-store-large",
-            Freestyle9100Count = i % 3 == 0 ? 2 : 1,
-            Freestyle3100Count = i % 3 == 0 ? 1 : 0,
             Footfall = hotspots[i].Footfall,
-            Spread = hotspots[i].Spread
-        });
-    }
-    for (var i = 0; i < 20; i++)
-    {
-        locations.Add($"location{locCount++}", new PlacedLocations
-        {
-            Longitude = hotspots[i].Longitude,
-            Latitude = hotspots[i].Latitude,
-            LocationType = "Grocery-store",
-            Freestyle9100Count = i % 20 == 0 ? 2 : 1,
-            Freestyle3100Count = i % 20 == 0 ? 1 : 0,
-            Footfall = hotspots[i].Footfall,
-            Spread = hotspots[i].Spread
-            //Freestyle9100Count = i % 2 == 0 ? 0 : 1,
-            //Freestyle3100Count = i % 2 == 0 ? 1 : 0
-        });
-    }
-    for (var i = 0; i < 20; i++)
-    {
-        locations.Add($"location{locCount++}", new PlacedLocations
-        {
-            Longitude = hotspots[i].Longitude,
-            Latitude = hotspots[i].Latitude,
-            LocationType = "Convenience",
-            Freestyle3100Count = 0,
-            Freestyle9100Count = 0,
-            Footfall = hotspots[i].Footfall,
-            Spread = hotspots[i].Spread
-            //Freestyle9100Count = i % 4 == 0 ? 2 : 1,
-            //Freestyle9100Count = 0,
-            //Freestyle3100Count = i % 4 == 0 ? 1 : 0
-            //Freestyle3100Count = 1
-        });
-    }
-    for (var i = 0; i < 8; i++)
-    {
-        locations.Add($"location{locCount++}", new PlacedLocations
-        {
-            Longitude = hotspots[i].Longitude,
-            Latitude = hotspots[i].Latitude,
-            LocationType = "Gas-station",
-            Freestyle3100Count = 0,
-            Freestyle9100Count = 0,
-            Footfall = hotspots[i].Footfall,
-            Spread = hotspots[i].Spread
-            //Freestyle9100Count = i % 4 == 0 ? 2 : 1,
-            //Freestyle3100Count = 0, //i % 4 == 0 ? 1 : 0
-        });
-    }
-    for (var i = 0; i < 3; i++)
-    {
-        locations.Add($"location{locCount++}", new PlacedLocations
-        {
-            Longitude = hotspots[i].Longitude,
-            Latitude = hotspots[i].Latitude,
-            LocationType = "Kiosk",
-            Freestyle3100Count = 0,
-            Freestyle9100Count = 0,
-            Footfall = hotspots[i].Footfall,
-            Spread = hotspots[i].Spread
-            //Freestyle9100Count = 0, //i % 4 == 0 ? 2 : 1,
-            //Freestyle3100Count = i % 2 == 0 ? 1 : 0
+            Spread = hotspots[i].Spread,
+            LocationType = locationType,
+            Freestyle3100Count = Get3100Count(locationType, i),
+            Freestyle9100Count = Get9100Count(locationType, i),
         });
     }
 
+    
+
     return locations;
+
+    int Get3100Count(string locationType, int i)
+    {
+        return locationType switch
+        {
+            "Grocery-store-large" => i % 3 == 0 ? 1 : 0,
+            "Grocery-store" => i % 20 == 0 ? 1 : 0,
+            "Convenience" => 2,
+            "Gas-station" => 2,
+            "Kiosk" => 2,
+            _ => 0
+        };
+    }
+
+    int Get9100Count(string locationType, int i)
+    {
+        return locationType switch
+        {
+            "Grocery-store-large" => i % 3 == 0 ? 2 : 1,
+            "Grocery-store" => i % 20 == 0 ? 2 : 1,
+            "Convenience" => 2,
+            "Gas-station" => 2,
+            "Kiosk" => 2,
+            _ => 0
+        };
+    }
+    //for (var i = 0; i < 5; i++)
+    //{
+    //    locations.Add($"location{locCount++}", new PlacedLocations
+    //    {
+    //        Longitude = hotspots[i].Longitude,
+    //        Latitude = hotspots[i].Latitude,
+    //        LocationType = GetLocationType(locCount-1), //"Grocery-store-large",
+    //        Freestyle9100Count = i % 3 == 0 ? 2 : 1,
+    //        Freestyle3100Count = i % 3 == 0 ? 1 : 0,
+    //        Footfall = hotspots[i].Footfall,
+    //        Spread = hotspots[i].Spread
+    //    });
+    //}
+    //for (var i = 0; i < 20; i++)
+    //{
+    //    locations.Add($"location{locCount++}", new PlacedLocations
+    //    {
+    //        Longitude = hotspots[i].Longitude,
+    //        Latitude = hotspots[i].Latitude,
+    //        LocationType = GetLocationType(locCount-1), //"Grocery-store",
+    //        Freestyle9100Count = i % 20 == 0 ? 2 : 1,
+    //        Freestyle3100Count = i % 20 == 0 ? 1 : 0,
+    //        Footfall = hotspots[i].Footfall,
+    //        Spread = hotspots[i].Spread
+    //        //Freestyle9100Count = i % 2 == 0 ? 0 : 1,
+    //        //Freestyle3100Count = i % 2 == 0 ? 1 : 0
+    //    });
+    //}
+    //for (var i = 0; i < 20; i++)
+    //{
+    //    locations.Add($"location{locCount++}", new PlacedLocations
+    //    {
+    //        Longitude = hotspots[i].Longitude,
+    //        Latitude = hotspots[i].Latitude,
+    //        LocationType = GetLocationType(locCount-1), //"Convenience",
+    //        Freestyle3100Count = 2,
+    //        Freestyle9100Count = 2,
+    //        Footfall = hotspots[i].Footfall,
+    //        Spread = hotspots[i].Spread
+    //        //Freestyle9100Count = i % 4 == 0 ? 2 : 1,
+    //        //Freestyle9100Count = 0,
+    //        //Freestyle3100Count = i % 4 == 0 ? 1 : 0
+    //        //Freestyle3100Count = 1
+    //    });
+    //}
+    //for (var i = 0; i < 8; i++)
+    //{
+    //    locations.Add($"location{locCount++}", new PlacedLocations
+    //    {
+    //        Longitude = hotspots[i].Longitude,
+    //        Latitude = hotspots[i].Latitude,
+    //        LocationType = GetLocationType(locCount-1), //"Gas-station",
+    //        Freestyle3100Count = 2,
+    //        Freestyle9100Count = 2,
+    //        Footfall = hotspots[i].Footfall,
+    //        Spread = hotspots[i].Spread
+    //        //Freestyle9100Count = i % 4 == 0 ? 2 : 1,
+    //        //Freestyle3100Count = 0, //i % 4 == 0 ? 1 : 0
+    //    });
+    //}
+    //for (var i = 0; i < 3; i++)
+    //{
+    //    locations.Add($"location{locCount++}", new PlacedLocations
+    //    {
+    //        Longitude = hotspots[i].Longitude,
+    //        Latitude = hotspots[i].Latitude,
+    //        LocationType = GetLocationType(locCount-1), //"Kiosk",
+    //        Freestyle3100Count = 2,
+    //        Freestyle9100Count = 2,
+    //        Footfall = hotspots[i].Footfall,
+    //        Spread = hotspots[i].Spread
+    //        //Freestyle9100Count = 0, //i % 4 == 0 ? 2 : 1,
+    //        //Freestyle3100Count = i % 2 == 0 ? 1 : 0
+    //    });
+    //}
+
+    string GetLocationType(int locationCounter)
+    {
+        //return (locationCounter % 5) switch
+        //{
+        //    1 => "Grocery-store-large",
+        //    2 => "Grocery-store",
+        //    3 => "Convenience",
+        //    4 => "Gas-station",
+        //    _ => "Kiosk"
+        //};
+
+        //return locationCounter switch
+        //{
+        //    >= 1 and <= 5 => "Grocery-store-large",
+        //    <= 25 => "Grocery-store",
+        //    <= 45 => "Convenience",
+        //    <= 53 => "Gas-station",
+        //    _ => "Kiosk"
+        //};
+
+        string[] locationTypes =
+        {
+            "Grocery-store-large",
+            "Convenience",
+            "Grocery-store",
+            "Gas-station",
+            "Kiosk",
+            "Convenience",
+            "Grocery-store",
+            "Gas-station",
+            "Convenience",
+            "Grocery-store",
+            "Convenience",
+            "Kiosk",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store-large",
+            "Grocery-store-large",
+            "Grocery-store-large",
+            "Grocery-store-large",
+            "Gas-station",
+            "Gas-station",
+            "Kiosk",
+            "Convenience",
+            "Convenience",
+            "Convenience",
+            "Convenience",
+            "Gas-station",
+            "Convenience",
+            "Convenience",
+            "Convenience",
+            "Convenience",
+            "Gas-station",
+            "Gas-station",
+            "Convenience",
+            "Convenience",
+            "Convenience",
+            "Convenience",
+            "Gas-station",
+            "Convenience",
+            "Convenience",
+            "Convenience",
+            "Convenience",
+
+
+        };
+
+        return locationTypes[locationCounter - 1];
+
+    }
 }

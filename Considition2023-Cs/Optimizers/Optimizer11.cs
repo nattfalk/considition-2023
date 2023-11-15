@@ -1,10 +1,8 @@
-﻿using System.Runtime.InteropServices;
+﻿namespace Considition2023_Cs.Optimizers;
 
-namespace Considition2023_Cs.Optimizers;
-
-internal class Optimizer3_sorted_dec : OptimizerBase
+internal class Optimizer11 : OptimizerBase
 {
-    public Optimizer3_sorted_dec(GeneralData generalData, MapData mapData, OptimizerSort sort) 
+    public Optimizer11(GeneralData generalData, MapData mapData, OptimizerSort sort) 
         : base(generalData, mapData, sort)
     {
         _optimizationFunctions = new List<OptimizerAction>
@@ -73,51 +71,6 @@ internal class Optimizer3_sorted_dec : OptimizerBase
                     loc.Freestyle3100Count = 2;
                 },
             },
-
-            new()
-            {
-                Optimizer = loc =>
-                {
-                    loc.Freestyle9100Count = Math.Max(loc.Freestyle9100Count - 1, 0);
-                    loc.Freestyle3100Count = Math.Min(loc.Freestyle3100Count + 1, 2);
-                },
-            },
-            new()
-            {
-                Optimizer = loc =>
-                {
-                    loc.Freestyle3100Count = Math.Max(loc.Freestyle3100Count - 1, 0);
-                },
-            },
-            new()
-            {
-                Optimizer = loc =>
-                {
-                    loc.Freestyle3100Count = Math.Min(loc.Freestyle3100Count + 1, 2);
-                },
-            },
-            new()
-            {
-                Optimizer = loc =>
-                {
-                    loc.Freestyle3100Count = Math.Max(loc.Freestyle3100Count - 1, 0);
-                    loc.Freestyle9100Count = Math.Min(loc.Freestyle9100Count + 1, 2);
-                },
-            },
-            new()
-            {
-                Optimizer = loc =>
-                {
-                    loc.Freestyle9100Count = Math.Max(loc.Freestyle9100Count - 1, 0);
-                },
-            },
-            new()
-            {
-                Optimizer = loc =>
-                {
-                    loc.Freestyle9100Count = Math.Min(loc.Freestyle9100Count + 1, 2);
-                },
-            },
         };
     }
 
@@ -126,15 +79,32 @@ internal class Optimizer3_sorted_dec : OptimizerBase
         double currentScore, 
         ref int optimizeRun)
     {
+
         if (_mapData.locations.Count > 0)
         {
-            locations = locations.OrderByDescending(x => _mapData.locations[x.Key].SalesVolume * _mapData.locations[x.Key].Footfall)
-                .ToDictionary(x => x.Key, y => y.Value);
+            locations = _sort switch
+            {
+                OptimizerSort.Ascending => locations
+                    .OrderBy(x => _mapData.locations[x.Key].SalesVolume * _mapData.locations[x.Key].Footfall)
+                    .ToDictionary(x => x.Key, y => y.Value),
+                OptimizerSort.Descending => locations
+                    .OrderByDescending(x => _mapData.locations[x.Key].SalesVolume * _mapData.locations[x.Key].Footfall)
+                    .ToDictionary(x => x.Key, y => y.Value),
+                _ => locations
+            };
         }
         else
         {
-            locations = locations.OrderByDescending(x => x.Value.Spread / x.Value.Footfall)
-                .ToDictionary(x => x.Key, y => y.Value);
+            locations = _sort switch
+            {
+                OptimizerSort.Ascending => locations
+                    .OrderBy(x => x.Value.Spread / x.Value.Footfall)
+                    .ToDictionary(x => x.Key, y => y.Value),
+                OptimizerSort.Descending => locations
+                    .OrderByDescending(x => x.Value.Spread / x.Value.Footfall)
+                    .ToDictionary(x => x.Key, y => y.Value),
+                _ => locations
+            };
         }
 
         var scoreValue = currentScore;

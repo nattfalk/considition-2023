@@ -1,14 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 
 namespace Considition2023_Cs
 {
+    public enum OptimizerSort
+    {
+        None,
+        Ascending,
+        Descending,
+    }
+
+    public class OptimizerAction
+    {
+        [JsonIgnore]
+        public Action<PlacedLocations> Optimizer { get; set; }
+        public int UsageCount { get; set; }
+    }
+
     public class SubmitSolution
     {
         public required Dictionary<string, PlacedLocations> Locations { get; set; }
@@ -32,9 +40,6 @@ namespace Considition2023_Cs
         [JsonIgnore]
         public double Spread { get; set; } = 0d;
     }
-
-
-
 
     public class MapData
     {
@@ -74,7 +79,6 @@ namespace Considition2023_Cs
         public double Longitude { get; set; }
         public double Footfall { get; set; }
     }
-
 
     public class GeneralData
     {
@@ -131,8 +135,6 @@ namespace Considition2023_Cs
         public required double SalesVolume { get; set; } = -1;
     }
 
-
-
     public class GameData
     {
         public Guid Id { get; set; }
@@ -174,5 +176,4 @@ namespace Considition2023_Cs
         public double TotalFootfall { get; set; } = 0;
         public double Total { get; set; } = 0;
     }
-
 }

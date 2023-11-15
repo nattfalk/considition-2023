@@ -2,57 +2,82 @@
 
 internal class Optimizer1 : OptimizerBase
 {
-    private readonly List<Action<PlacedLocations>> _optimizationFunctions;
-    
-    public Optimizer1(GeneralData generalData, MapData mapData) 
-        : base(generalData, mapData)
+    public Optimizer1(GeneralData generalData, MapData mapData, OptimizerSort sort) 
+        : base(generalData, mapData, sort)
     {
-        _optimizationFunctions = new List<Action<PlacedLocations>>
+        _optimizationFunctions = new List<OptimizerAction>
         {
-            loc =>
+            new()
             {
-                loc.Freestyle9100Count = 0;
-                loc.Freestyle3100Count = 0;
+                Optimizer = loc =>
+                {
+                    loc.Freestyle9100Count = 0;
+                    loc.Freestyle3100Count = 0;
+                },
             },
-            loc =>
+            new()
             {
-                loc.Freestyle9100Count = 0;
-                loc.Freestyle3100Count = 1;
+                Optimizer = loc =>
+                {
+                    loc.Freestyle9100Count = 0;
+                    loc.Freestyle3100Count = 1;
+                },
             },
-            loc =>
+            new()
             {
-                loc.Freestyle9100Count = 0;
-                loc.Freestyle3100Count = 2;
+                Optimizer = loc =>
+                {
+                    loc.Freestyle9100Count = 0;
+                    loc.Freestyle3100Count = 2;
+                },
             },
-            loc =>
+            new()
             {
-                loc.Freestyle9100Count = 1;
-                loc.Freestyle3100Count = 0;
+                Optimizer = loc =>
+                {
+                    loc.Freestyle9100Count = 1;
+                    loc.Freestyle3100Count = 0;
+                },
             },
-            loc =>
+            new()
             {
-                loc.Freestyle9100Count = 2;
-                loc.Freestyle3100Count = 0;
+                Optimizer = loc =>
+                {
+                    loc.Freestyle9100Count = 2;
+                    loc.Freestyle3100Count = 0;
+                },
             },
-            loc =>
+            new()
             {
-                loc.Freestyle9100Count = 1;
-                loc.Freestyle3100Count = 2;
+                Optimizer = loc =>
+                {
+                    loc.Freestyle9100Count = 1;
+                    loc.Freestyle3100Count = 2;
+                },
             },
-            loc =>
+            new()
             {
-                loc.Freestyle9100Count = 2;
-                loc.Freestyle3100Count = 1;
+                Optimizer = loc =>
+                {
+                    loc.Freestyle9100Count = 2;
+                    loc.Freestyle3100Count = 1;
+                },
             },
-            loc =>
+            new()
             {
-                loc.Freestyle9100Count = 2;
-                loc.Freestyle3100Count = 2;
-            }
+                Optimizer = loc =>
+                {
+                    loc.Freestyle9100Count = 2;
+                    loc.Freestyle3100Count = 2;
+                },
+            },
         };
     }
 
-    public override double Optimize(Dictionary<string, PlacedLocations> locations, double currentScore, ref int optimizeRun)
+    public override double Optimize(
+        Dictionary<string, PlacedLocations> locations, 
+        double currentScore, 
+        ref int optimizeRun)
     {
         var scoreValue = currentScore;
         while (true)
