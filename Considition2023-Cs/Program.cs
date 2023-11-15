@@ -58,18 +58,22 @@ var _3100Capacity = generalData.Freestyle3100Data.RefillCapacityPerWeek;
 
 var mapData = await api.GetMapDataAsync(mapName, apikey);
 
-if (mapName == MapNames.GSandbox || mapName == MapNames.SSandbox)
-{
-    await CreateMap();
-    return;
-}
-
 Dictionary<string, PlacedLocations> locations = new();
 SubmitSolution solution = new()
 {
-    Locations = InitializeLocations(mapData.locations, locations)
+    Locations = null
 };
-var score = new Scoring().CalculateScore(string.Empty, solution, mapData, generalData);
+
+if (mapName == MapNames.GSandbox || mapName == MapNames.SSandbox)
+{
+    locations = CreateSandboxMap();
+}
+
+solution.Locations = InitializeLocations(mapData.locations, locations)
+    .Where(x => x.Value.Freestyle3100Count > 0 || x.Value.Freestyle9100Count > 0)
+    .ToDictionary(x => x.Key, y => y.Value);
+
+var score = new Scoring().CalculateScore(mapName, solution, mapData, generalData);
 Console.SetCursorPosition(0, 7);
 Console.WriteLine($"Map: {mapName}, Initial GameScore: {score.GameScore!.Total}");
 var scoreValue = score.GameScore!.Total;
@@ -77,9 +81,9 @@ var scoreValue = score.GameScore!.Total;
 var optimizeRunCount = 1;
 var optimizers = new HashSet<IOptimizer>()
 {
-    //new Optimizer2(generalData, mapData),       // Linköping 699.57
+    new Optimizer2(generalData, mapData),       // Linköping 699.57
     //new Optimizer3_sorted_dec(generalData, mapData),    // Göteborg, 6147.40
-    new Optimizer3_sorted(generalData, mapData),    // Uppsala, 2410.65, Västerås, 1498.38
+    //new Optimizer3_sorted(generalData, mapData),    // Uppsala, 2410.65, Västerås, 1498.38
     
     //new Optimizer1(generalData, mapData),
     //new Optimizer3_2(generalData, mapData),
@@ -136,67 +140,49 @@ Dictionary<string, PlacedLocations> CopyLocations(Dictionary<string, PlacedLocat
         copiedLocations[kvp.Key] = new PlacedLocations
         {
             Freestyle3100Count = kvp.Value.Freestyle3100Count,
-            Freestyle9100Count = kvp.Value.Freestyle9100Count
+            Freestyle9100Count = kvp.Value.Freestyle9100Count,
+            LocationType = kvp.Value.LocationType,
+            Longitude = kvp.Value.Longitude,
+            Latitude = kvp.Value.Latitude
         };
     }
     return copiedLocations;
 }
 
-void OptimizeByLocation(
-    Dictionary<string, PlacedLocations> locations,
-    ref double scoreValue,
-    MapData mapData,
-    List<Action<PlacedLocations>> processLocationFunctions,
-    int optimizeRunCount)
-{
-    Dictionary<string, PlacedLocations> bestScore = new(locations);
-    foreach (var location in locations)
-    {
-        foreach (var processFunc in processLocationFunctions)
-        {
-            var old3100 = location.Value.Freestyle3100Count;
-            var old9100 = location.Value.Freestyle9100Count;
-
-            processFunc(location.Value);
-
-            var solution = new SubmitSolution
-            {
-                Locations = locations
-                    .Where(x => x.Value.Freestyle3100Count > 0 || x.Value.Freestyle9100Count > 0)
-                    .ToDictionary(x => x.Key, y => y.Value)
-            };
-
-            var score = new Scoring().CalculateScore(string.Empty, solution, mapData, generalData);
-            if (scoreValue >= score.GameScore!.Total)
-            {
-                location.Value.Freestyle3100Count = old3100;
-                location.Value.Freestyle9100Count = old9100;
-            }
-            else
-            {
-                scoreValue = score.GameScore.Total;
-            }
-        }
-    }
-}
-
 Dictionary<string, PlacedLocations> InitializeLocations(Dictionary<string, StoreLocation> inputLocations, IReadOnlyDictionary<string, PlacedLocations> calculatedLocations)
 {
     var initializedLocations = new Dictionary<string, PlacedLocations>();
-    foreach (var locationKeyPair in mapData.locations)
+    if (mapData.locations.Count > 0)
     {
-        var location = locationKeyPair.Value;
-        var calculatedLocation = calculatedLocations.TryGetValue(locationKeyPair.Key, out var location1) ? location1 : null;
-        initializedLocations[location.LocationName] = new PlacedLocations
+        foreach (var locationKeyPair in mapData.locations)
         {
-            Freestyle3100Count = calculatedLocation?.Freestyle3100Count ?? (location.SalesVolume <= _3100Capacity ? 1 : 0),
-            Freestyle9100Count = calculatedLocation?.Freestyle9100Count ?? (location.SalesVolume > _3100Capacity ? 1 : 0)
-        };
+            var location = locationKeyPair.Value;
+            var calculatedLocation = calculatedLocations.TryGetValue(locationKeyPair.Key, out var location1) ? location1 : null;
+            initializedLocations[location.LocationName] = new PlacedLocations
+            {
+                Freestyle3100Count = calculatedLocation?.Freestyle3100Count ?? (location.SalesVolume <= _3100Capacity ? 1 : 0),
+                Freestyle9100Count = calculatedLocation?.Freestyle9100Count ?? (location.SalesVolume > _3100Capacity ? 1 : 0)
+            };
+        }
+    }
+    else
+    {
+        foreach (var location in locations)
+        {
+            initializedLocations[location.Key] = new PlacedLocations
+            {
+                Freestyle3100Count = location.Value.Freestyle3100Count,
+                Freestyle9100Count = location.Value.Freestyle9100Count,
+                Latitude = location.Value.Latitude,
+                Longitude = location.Value.Longitude,
+                LocationType = location.Value.LocationType
+            };
+        }
     }
     return initializedLocations;
 }
 
-async Task CreateMap()
+Dictionary<string, PlacedLocations> CreateSandboxMap()
 {
     var locations = new Dictionary<string, PlacedLocations>();
 
@@ -233,52 +219,47 @@ async Task CreateMap()
             //Freestyle3100Count = i % 2 == 0 ? 1 : 0
         });
     }
-    //for (var i = 0; i < 20; i++)
-    //{
-    //    locations.Add($"location{locCount++}", new PlacedLocations
-    //    {
-    //        Longitude = hotspots[i].Longitude,
-    //        Latitude = hotspots[i].Latitude,
-    //        LocationType = "Convenience",
-    //        //Freestyle9100Count = i % 4 == 0 ? 2 : 1,
-    //        Freestyle9100Count = 0,
-    //        Freestyle3100Count = i % 4 == 0 ? 1 : 0
-    //        //Freestyle3100Count = 1
-    //    });
-    //}
-    //for (var i = 0; i < 8; i++)
-    //{
-    //    locations.Add($"location{locCount++}", new PlacedLocations
-    //    {
-    //        Longitude = hotspots[i].Longitude,
-    //        Latitude = hotspots[i].Latitude,
-    //        LocationType = "Gas-station",
-    //        Freestyle9100Count = i % 4 == 0 ? 2 : 1,
-    //        Freestyle3100Count = 0, //i % 4 == 0 ? 1 : 0
-    //    });
-    //}
-    //for (var i = 0; i < 3; i++)
-    //{
-    //    locations.Add($"location{locCount++}", new PlacedLocations
-    //    {
-    //        Longitude = hotspots[i].Longitude,
-    //        Latitude = hotspots[i].Latitude,
-    //        LocationType = "Kiosk",
-    //        Freestyle9100Count = 0, //i % 4 == 0 ? 2 : 1,
-    //        Freestyle3100Count = i % 2 == 0 ? 1 : 0
-    //    });
-    //}
-
-    var solution = new SubmitSolution()
+    for (var i = 0; i < 20; i++)
     {
-        Locations = locations
-    };
+        locations.Add($"location{locCount++}", new PlacedLocations
+        {
+            Longitude = hotspots[i].Longitude,
+            Latitude = hotspots[i].Latitude,
+            LocationType = "Convenience",
+            Freestyle3100Count = 0,
+            Freestyle9100Count = 0
+            //Freestyle9100Count = i % 4 == 0 ? 2 : 1,
+            //Freestyle9100Count = 0,
+            //Freestyle3100Count = i % 4 == 0 ? 1 : 0
+            //Freestyle3100Count = 1
+        });
+    }
+    for (var i = 0; i < 8; i++)
+    {
+        locations.Add($"location{locCount++}", new PlacedLocations
+        {
+            Longitude = hotspots[i].Longitude,
+            Latitude = hotspots[i].Latitude,
+            LocationType = "Gas-station",
+            Freestyle3100Count = 0,
+            Freestyle9100Count = 0
+            //Freestyle9100Count = i % 4 == 0 ? 2 : 1,
+            //Freestyle3100Count = 0, //i % 4 == 0 ? 1 : 0
+        });
+    }
+    for (var i = 0; i < 3; i++)
+    {
+        locations.Add($"location{locCount++}", new PlacedLocations
+        {
+            Longitude = hotspots[i].Longitude,
+            Latitude = hotspots[i].Latitude,
+            LocationType = "Kiosk",
+            Freestyle3100Count = 0,
+            Freestyle9100Count = 0
+            //Freestyle9100Count = 0, //i % 4 == 0 ? 2 : 1,
+            //Freestyle3100Count = i % 2 == 0 ? 1 : 0
+        });
+    }
 
-    var score = new Scoring().CalculateScore(mapName, solution, mapData, generalData);
-    Console.SetCursorPosition(0, 7);
-    Console.WriteLine($"Map: {mapName}, Initial GameScore: {score.GameScore!.Total}");
-    var prodScore = await api.SumbitAsync(mapName, solution, apikey);
-    Console.WriteLine($"GameId: {prodScore.Id}");
-    Console.WriteLine($"Submitted GameScore: {prodScore.GameScore!.Total}");
-    Console.WriteLine();
+    return locations;
 }
