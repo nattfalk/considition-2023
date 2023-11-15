@@ -83,8 +83,16 @@ internal class Optimizer3_sorted : OptimizerBase
 
     public override double Optimize(Dictionary<string, PlacedLocations> locations, double currentScore, ref int optimizeRun)
     {
-        locations = locations.OrderBy(x => _mapData.locations[x.Key].SalesVolume * _mapData.locations[x.Key].Footfall)
-            .ToDictionary(x => x.Key, y => y.Value);
+        if (_mapData.locations.Count > 0)
+        {
+            locations = locations.OrderBy(x => _mapData.locations[x.Key].SalesVolume * _mapData.locations[x.Key].Footfall)
+                .ToDictionary(x => x.Key, y => y.Value);
+        }
+        else
+        {
+            locations = locations.OrderBy(x => x.Value.Footfall)
+                .ToDictionary(x => x.Key, y => y.Value);
+        }
 
         var scoreValue = currentScore;
         while (true)

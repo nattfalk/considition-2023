@@ -81,8 +81,8 @@ var scoreValue = score.GameScore!.Total;
 var optimizeRunCount = 1;
 var optimizers = new HashSet<IOptimizer>()
 {
-    new Optimizer2(generalData, mapData),       // Linköping 699.57
-    //new Optimizer3_sorted_dec(generalData, mapData),    // Göteborg, 6147.40
+    //new Optimizer2(generalData, mapData),       // Linköping 699.57
+    new Optimizer3_sorted_dec(generalData, mapData),    // Göteborg, 6147.40
     //new Optimizer3_sorted(generalData, mapData),    // Uppsala, 2410.65, Västerås, 1498.38
     
     //new Optimizer1(generalData, mapData),
@@ -203,7 +203,9 @@ Dictionary<string, PlacedLocations> CreateSandboxMap()
             Latitude = hotspots[i].Latitude,
             LocationType = "Grocery-store-large",
             Freestyle9100Count = i % 3 == 0 ? 2 : 1,
-            Freestyle3100Count = i % 3 == 0 ? 1 : 0
+            Freestyle3100Count = i % 3 == 0 ? 1 : 0,
+            Footfall = hotspots[i].Footfall,
+            Spread = hotspots[i].Spread
         });
     }
     for (var i = 0; i < 20; i++)
@@ -214,7 +216,9 @@ Dictionary<string, PlacedLocations> CreateSandboxMap()
             Latitude = hotspots[i].Latitude,
             LocationType = "Grocery-store",
             Freestyle9100Count = i % 20 == 0 ? 2 : 1,
-            Freestyle3100Count = i % 20 == 0 ? 1 : 0
+            Freestyle3100Count = i % 20 == 0 ? 1 : 0,
+            Footfall = hotspots[i].Footfall,
+            Spread = hotspots[i].Spread
             //Freestyle9100Count = i % 2 == 0 ? 0 : 1,
             //Freestyle3100Count = i % 2 == 0 ? 1 : 0
         });
@@ -227,7 +231,9 @@ Dictionary<string, PlacedLocations> CreateSandboxMap()
             Latitude = hotspots[i].Latitude,
             LocationType = "Convenience",
             Freestyle3100Count = 0,
-            Freestyle9100Count = 0
+            Freestyle9100Count = 0,
+            Footfall = hotspots[i].Footfall,
+            Spread = hotspots[i].Spread
             //Freestyle9100Count = i % 4 == 0 ? 2 : 1,
             //Freestyle9100Count = 0,
             //Freestyle3100Count = i % 4 == 0 ? 1 : 0
@@ -242,7 +248,9 @@ Dictionary<string, PlacedLocations> CreateSandboxMap()
             Latitude = hotspots[i].Latitude,
             LocationType = "Gas-station",
             Freestyle3100Count = 0,
-            Freestyle9100Count = 0
+            Freestyle9100Count = 0,
+            Footfall = hotspots[i].Footfall,
+            Spread = hotspots[i].Spread
             //Freestyle9100Count = i % 4 == 0 ? 2 : 1,
             //Freestyle3100Count = 0, //i % 4 == 0 ? 1 : 0
         });
@@ -255,7 +263,9 @@ Dictionary<string, PlacedLocations> CreateSandboxMap()
             Latitude = hotspots[i].Latitude,
             LocationType = "Kiosk",
             Freestyle3100Count = 0,
-            Freestyle9100Count = 0
+            Freestyle9100Count = 0,
+            Footfall = hotspots[i].Footfall,
+            Spread = hotspots[i].Spread
             //Freestyle9100Count = 0, //i % 4 == 0 ? 2 : 1,
             //Freestyle3100Count = i % 2 == 0 ? 1 : 0
         });

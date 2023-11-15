@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Considition2023_Cs
 {
@@ -25,6 +26,11 @@ namespace Considition2023_Cs
         public double Latitude { get; set; }
         public double Longitude { get; set; }
         public string LocationType { get; set; } = string.Empty;
+
+        [JsonIgnore]
+        public double Footfall { get; set; } = 0d;
+        [JsonIgnore]
+        public double Spread { get; set; } = 0d;
     }
 
 
