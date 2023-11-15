@@ -101,7 +101,7 @@ internal class Optimizer11 : OptimizerBase
                     .OrderBy(x => x.Value.Spread / x.Value.Footfall)
                     .ToDictionary(x => x.Key, y => y.Value),
                 OptimizerSort.Descending => locations
-                    .OrderByDescending(x => x.Value.Spread / x.Value.Footfall)
+                    .OrderByDescending(x => x.Value.Spread * x.Value.Footfall)
                     .ToDictionary(x => x.Key, y => y.Value),
                 _ => locations
             };

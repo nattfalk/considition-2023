@@ -84,10 +84,11 @@ var optimizers = new HashSet<IOptimizer>()
 {
     //new Optimizer10(generalData, mapData, OptimizerSort.None),
     //new Optimizer10(generalData, mapData, OptimizerSort.Ascending),
-    //new Optimizer10(generalData, mapData, OptimizerSort.Descending),
+    new Optimizer10(generalData, mapData, OptimizerSort.Descending),
     //new Optimizer11(generalData, mapData, OptimizerSort.None),
     //new Optimizer11(generalData, mapData, OptimizerSort.Ascending),
     new Optimizer11(generalData, mapData, OptimizerSort.Descending),
+    
     //new Optimizer2(generalData, mapData),       // Linköping 699.57
     //new Optimizer3_sorted_dec(generalData, mapData),    // Göteborg, 6147.40, G-Sandbox, 2342.08
     //new Optimizer3_sorted(generalData, mapData),    // Uppsala, 2412.25, Västerås, 1498.38
@@ -108,22 +109,22 @@ while (true)
     var previousScore = scoreValue;
     foreach (var optimizer in optimizers)
     {
-        var tempLocations = InitializeLocations(mapData.locations, locations);
-        var newScore = optimizer.Optimize(tempLocations, scoreValue, ref optimizeRunCount);
-        if (newScore > previousScore)
-        {
-            previousScore = newScore;
-            currentBestLocations = CopyLocations(tempLocations);
-        }
         //var tempLocations = InitializeLocations(mapData.locations, locations);
         //var newScore = optimizer.Optimize(tempLocations, scoreValue, ref optimizeRunCount);
         //if (newScore > previousScore)
         //{
         //    previousScore = newScore;
-        //    scoreValue = newScore;
         //    currentBestLocations = CopyLocations(tempLocations);
-        //    locations = CopyLocations(tempLocations);
         //}
+        var tempLocations = InitializeLocations(mapData.locations, locations);
+        var newScore = optimizer.Optimize(tempLocations, scoreValue, ref optimizeRunCount);
+        if (newScore > previousScore)
+        {
+            previousScore = newScore;
+            scoreValue = newScore;
+            currentBestLocations = CopyLocations(tempLocations);
+            locations = CopyLocations(tempLocations);
+        }
 
         Console.SetCursorPosition(0, 8);
         Console.WriteLine($"- Optimize step: {optimizeRunCount,3:0}, New score: {scoreValue,11:#.00}");
@@ -270,81 +271,6 @@ Dictionary<string, PlacedLocations> CreateSandboxMap()
             _ => 0
         };
     }
-    //for (var i = 0; i < 5; i++)
-    //{
-    //    locations.Add($"location{locCount++}", new PlacedLocations
-    //    {
-    //        Longitude = hotspots[i].Longitude,
-    //        Latitude = hotspots[i].Latitude,
-    //        LocationType = GetLocationType(locCount-1), //"Grocery-store-large",
-    //        Freestyle9100Count = i % 3 == 0 ? 2 : 1,
-    //        Freestyle3100Count = i % 3 == 0 ? 1 : 0,
-    //        Footfall = hotspots[i].Footfall,
-    //        Spread = hotspots[i].Spread
-    //    });
-    //}
-    //for (var i = 0; i < 20; i++)
-    //{
-    //    locations.Add($"location{locCount++}", new PlacedLocations
-    //    {
-    //        Longitude = hotspots[i].Longitude,
-    //        Latitude = hotspots[i].Latitude,
-    //        LocationType = GetLocationType(locCount-1), //"Grocery-store",
-    //        Freestyle9100Count = i % 20 == 0 ? 2 : 1,
-    //        Freestyle3100Count = i % 20 == 0 ? 1 : 0,
-    //        Footfall = hotspots[i].Footfall,
-    //        Spread = hotspots[i].Spread
-    //        //Freestyle9100Count = i % 2 == 0 ? 0 : 1,
-    //        //Freestyle3100Count = i % 2 == 0 ? 1 : 0
-    //    });
-    //}
-    //for (var i = 0; i < 20; i++)
-    //{
-    //    locations.Add($"location{locCount++}", new PlacedLocations
-    //    {
-    //        Longitude = hotspots[i].Longitude,
-    //        Latitude = hotspots[i].Latitude,
-    //        LocationType = GetLocationType(locCount-1), //"Convenience",
-    //        Freestyle3100Count = 2,
-    //        Freestyle9100Count = 2,
-    //        Footfall = hotspots[i].Footfall,
-    //        Spread = hotspots[i].Spread
-    //        //Freestyle9100Count = i % 4 == 0 ? 2 : 1,
-    //        //Freestyle9100Count = 0,
-    //        //Freestyle3100Count = i % 4 == 0 ? 1 : 0
-    //        //Freestyle3100Count = 1
-    //    });
-    //}
-    //for (var i = 0; i < 8; i++)
-    //{
-    //    locations.Add($"location{locCount++}", new PlacedLocations
-    //    {
-    //        Longitude = hotspots[i].Longitude,
-    //        Latitude = hotspots[i].Latitude,
-    //        LocationType = GetLocationType(locCount-1), //"Gas-station",
-    //        Freestyle3100Count = 2,
-    //        Freestyle9100Count = 2,
-    //        Footfall = hotspots[i].Footfall,
-    //        Spread = hotspots[i].Spread
-    //        //Freestyle9100Count = i % 4 == 0 ? 2 : 1,
-    //        //Freestyle3100Count = 0, //i % 4 == 0 ? 1 : 0
-    //    });
-    //}
-    //for (var i = 0; i < 3; i++)
-    //{
-    //    locations.Add($"location{locCount++}", new PlacedLocations
-    //    {
-    //        Longitude = hotspots[i].Longitude,
-    //        Latitude = hotspots[i].Latitude,
-    //        LocationType = GetLocationType(locCount-1), //"Kiosk",
-    //        Freestyle3100Count = 2,
-    //        Freestyle9100Count = 2,
-    //        Footfall = hotspots[i].Footfall,
-    //        Spread = hotspots[i].Spread
-    //        //Freestyle9100Count = 0, //i % 4 == 0 ? 2 : 1,
-    //        //Freestyle3100Count = i % 2 == 0 ? 1 : 0
-    //    });
-    //}
 
     string GetLocationType(int locationCounter)
     {
@@ -368,6 +294,7 @@ Dictionary<string, PlacedLocations> CreateSandboxMap()
 
         string[] locationTypes =
         {
+
             "Grocery-store-large",
             "Convenience",
             "Grocery-store",
@@ -375,14 +302,14 @@ Dictionary<string, PlacedLocations> CreateSandboxMap()
             "Kiosk",
             "Convenience",
             "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
             "Gas-station",
             "Convenience",
             "Grocery-store",
             "Convenience",
             "Kiosk",
-            "Grocery-store",
-            "Grocery-store",
-            "Grocery-store",
             "Grocery-store",
             "Grocery-store",
             "Grocery-store",
