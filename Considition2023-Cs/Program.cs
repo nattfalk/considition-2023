@@ -219,11 +219,11 @@ Dictionary<string, PlacedLocations> CreateSandboxMap()
     //const int maxKiosk = 3;
 
     var hotspots = mapData.Hotspots
+        .OrderBy(h => h.Footfall /** h.Spread*/)
         .Where(h => 
             h.Longitude >= mapData.Border.LongitudeMin && h.Longitude <= mapData.Border.LongitudeMax 
             && h.Latitude >= mapData.Border.LatitudeMin && h.Latitude <= mapData.Border.LatitudeMax)
-        .OrderBy(h => h.Footfall * h.Spread)
-        .Where((x, i) => i % 2 > 0)
+        .Where((x, i) => i % 2 == 0)
         .ToList();
 
     var locCount = 1;
@@ -294,7 +294,6 @@ Dictionary<string, PlacedLocations> CreateSandboxMap()
 
         string[] locationTypes =
         {
-
             "Grocery-store-large",
             "Convenience",
             "Grocery-store",
@@ -311,13 +310,7 @@ Dictionary<string, PlacedLocations> CreateSandboxMap()
             "Convenience",
             "Kiosk",
             "Grocery-store",
-            "Grocery-store",
-            "Grocery-store",
-            "Grocery-store",
-            "Grocery-store",
-            "Grocery-store",
-            "Grocery-store",
-            "Grocery-store",
+            "Grocery-store-large",
             "Grocery-store",
             "Grocery-store",
             "Grocery-store",
@@ -325,8 +318,13 @@ Dictionary<string, PlacedLocations> CreateSandboxMap()
             "Grocery-store",
             "Grocery-store",
             "Grocery-store-large",
-            "Grocery-store-large",
-            "Grocery-store-large",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
+            "Grocery-store",
             "Grocery-store-large",
             "Gas-station",
             "Gas-station",
@@ -337,6 +335,7 @@ Dictionary<string, PlacedLocations> CreateSandboxMap()
             "Convenience",
             "Gas-station",
             "Convenience",
+            "Grocery-store-large",
             "Convenience",
             "Convenience",
             "Convenience",
@@ -351,8 +350,6 @@ Dictionary<string, PlacedLocations> CreateSandboxMap()
             "Convenience",
             "Convenience",
             "Convenience",
-
-
         };
 
         return locationTypes[locationCounter - 1];
