@@ -1,8 +1,8 @@
 ﻿namespace Considition2023_Cs.Optimizers;
 
-internal class Optimizer10 : OptimizerBase
+internal class Optimizer12 : OptimizerBase
 {
-    public Optimizer10(GeneralData generalData, MapData mapData, OptimizerSort sort) 
+    public Optimizer12(GeneralData generalData, MapData mapData, OptimizerSort sort)
         : base(generalData, mapData, sort)
     {
         _optimizationFunctions = new List<OptimizerAction>
@@ -11,14 +11,7 @@ internal class Optimizer10 : OptimizerBase
             {
                 Optimizer = loc =>
                 {
-                    loc.Freestyle9100Count = Math.Max(loc.Freestyle9100Count - 1, 0);
-                    loc.Freestyle3100Count = Math.Min(loc.Freestyle3100Count + 1, 2);
-                },
-            },
-            new()
-            {
-                Optimizer = loc =>
-                {
+                    if (loc.LocationType != "Grocery-store" && loc.LocationType != "Kiosk") return;
                     loc.Freestyle3100Count = Math.Max(loc.Freestyle3100Count - 1, 0);
                 },
             },
@@ -26,39 +19,35 @@ internal class Optimizer10 : OptimizerBase
             {
                 Optimizer = loc =>
                 {
-                    loc.Freestyle3100Count = Math.Min(loc.Freestyle3100Count + 1, 2);
-                },
-            },
-            new()
-            {
-                Optimizer = loc =>
-                {
+                    if (loc.LocationType != "Grocery-store" && loc.LocationType != "Kiosk") return;
                     loc.Freestyle3100Count = Math.Max(loc.Freestyle3100Count - 1, 0);
-                    loc.Freestyle9100Count = Math.Min(loc.Freestyle9100Count + 1, 2);
                 },
             },
             new()
             {
                 Optimizer = loc =>
                 {
-                    loc.Freestyle9100Count = Math.Max(loc.Freestyle9100Count - 1, 0);
+                    if (loc.LocationType != "Grocery-store" && loc.LocationType != "Kiosk") return;
+                    loc.Freestyle3100Count = Math.Min(loc.Freestyle3100Count + 1, 1);
                 },
             },
             new()
             {
                 Optimizer = loc =>
                 {
-                    loc.Freestyle9100Count = Math.Min(loc.Freestyle9100Count + 1, 2);
+                    if (loc.LocationType != "Grocery-store" && loc.LocationType != "Kiosk") return;
+                    loc.Freestyle3100Count = Math.Min(loc.Freestyle3100Count + 1, 1);
                 },
             },
         };
     }
 
     public override double Optimize(
-        Dictionary<string, PlacedLocations> locations, 
-        double currentScore, 
+        Dictionary<string, PlacedLocations> locations,
+        double currentScore,
         ref int optimizeRun)
     {
+
         if (_mapData.locations.Count > 0)
         {
             locations = _sort switch
@@ -77,7 +66,7 @@ internal class Optimizer10 : OptimizerBase
             locations = _sort switch
             {
                 OptimizerSort.Ascending => locations
-                    .OrderBy(x => x.Value.Spread * x.Value.Footfall)
+                    .OrderBy(x => x.Value.Spread / x.Value.Footfall)
                     .ToDictionary(x => x.Key, y => y.Value),
                 OptimizerSort.Descending => locations
                     .OrderByDescending(x => x.Value.Spread * x.Value.Footfall)
@@ -96,13 +85,6 @@ internal class Optimizer10 : OptimizerBase
                 scoreValue = OptimizerFunctions.OptimizeByFunction(_generalData, _mapData, locations, scoreValue, optimizationFunction);
                 Console.SetCursorPosition(0, 8);
                 Console.WriteLine($"- Optimize step: {optimizeRun++,3:0}, New score: {scoreValue,11:#.00}");
-                
-                var solution = new SubmitSolution
-                {
-                    Locations = LocationsHelper.GetUsedLocations(locations)
-                };
-                var score = new Scoring().CalculateScore(_mapData.MapName, solution, _mapData, _generalData);
-                Console.WriteLine($"- Validation step: {(optimizeRun - 1),3:0}, New score: {scoreValue,11:#.00}");
             }
 
             if (Math.Abs(previousScore - scoreValue) < 0.0000001d) break;

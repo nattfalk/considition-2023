@@ -133,7 +133,7 @@ internal class Optimizer3_sorted_dec : OptimizerBase
         }
         else
         {
-            locations = locations.OrderByDescending(x => x.Value.Spread / x.Value.Footfall)
+            locations = locations.OrderByDescending(x => x.Value.Spread * x.Value.Footfall)
                 .ToDictionary(x => x.Key, y => y.Value);
         }
 

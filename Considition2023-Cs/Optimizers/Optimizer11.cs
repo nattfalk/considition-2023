@@ -117,6 +117,13 @@ internal class Optimizer11 : OptimizerBase
                 scoreValue = OptimizerFunctions.OptimizeByFunction(_generalData, _mapData, locations, scoreValue, optimizationFunction);
                 Console.SetCursorPosition(0, 8);
                 Console.WriteLine($"- Optimize step: {optimizeRun++,3:0}, New score: {scoreValue,11:#.00}");
+
+                var solution = new SubmitSolution
+                {
+                    Locations = LocationsHelper.GetUsedLocations(locations)
+                };
+                var score = new Scoring().CalculateScore(_mapData.MapName, solution, _mapData, _generalData);
+                Console.WriteLine($"- Validation step: {(optimizeRun-1),3:0}, New score: {scoreValue,11:#.00}");
             }
 
             if (Math.Abs(previousScore - scoreValue) < 0.0000001d) break;

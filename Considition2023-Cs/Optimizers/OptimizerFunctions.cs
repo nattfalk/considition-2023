@@ -19,9 +19,7 @@ internal static class OptimizerFunctions
 
             var solution = new SubmitSolution
             {
-                Locations = locations
-                    .Where(x => x.Value.Freestyle3100Count > 0 || x.Value.Freestyle9100Count > 0)
-                    .ToDictionary(x => x.Key, y => y.Value)
+                Locations = LocationsHelper.GetUsedLocations(locations)
             };
 
             var score = new Scoring().CalculateScore(mapData.MapName, solution, mapData, generalData);
@@ -29,6 +27,42 @@ internal static class OptimizerFunctions
             {
                 location.Value.Freestyle3100Count = old3100;
                 location.Value.Freestyle9100Count = old9100;
+            }
+            else
+            {
+                scoreValue = score.GameScore.Total;
+                processLocation.UsageCount++;
+            }
+        }
+
+        return scoreValue;
+    }
+
+    internal static double OptimizeByLongLat(
+        GeneralData generalData,
+        MapData mapData,
+        Dictionary<string, PlacedLocations> locations,
+        double currentScoreValue,
+        OptimizerAction processLocation)
+    {
+        var scoreValue = currentScoreValue;
+        foreach (var location in locations)
+        {
+            var oldLong = location.Value.Longitude;
+            var oldLat = location.Value.Latitude;
+
+            processLocation.Optimizer(location.Value);
+
+            var solution = new SubmitSolution
+            {
+                Locations = LocationsHelper.GetUsedLocations(locations)
+            };
+
+            var score = new Scoring().CalculateScore(mapData.MapName, solution, mapData, generalData);
+            if (scoreValue >= score.GameScore!.Total)
+            {
+                location.Value.Longitude = oldLong;
+                location.Value.Latitude = oldLat;
             }
             else
             {
@@ -59,9 +93,7 @@ internal static class OptimizerFunctions
 
                 var solution = new SubmitSolution
                 {
-                    Locations = locations
-                        .Where(x => x.Value.Freestyle3100Count > 0 || x.Value.Freestyle9100Count > 0)
-                        .ToDictionary(x => x.Key, y => y.Value)
+                    Locations = LocationsHelper.GetUsedLocations(locations)
                 };
 
                 var score = new Scoring().CalculateScore(mapData.MapName, solution, mapData, generalData);
